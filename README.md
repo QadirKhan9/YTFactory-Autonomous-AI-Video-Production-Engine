@@ -45,6 +45,10 @@
    # ── LLM Providers (at least one required) ─────────────
    GROQ_API_KEY=your_groq_key_here        # Free tier at console.groq.com
    GEMINI_API_KEY=your_gemini_key_here    # Optional — console.cloud.google.com
+
+   # ── Free GPU image gen (optional — see Kaggle section below) ──
+   HF_TOKEN=hf_your_token_here            # huggingface.co/settings/tokens
+   YT_GPU_BUS_REPO=your-hf-username/ytfactory-gpu-bus
    ```
    > **Tip**: Get a free Groq API key at [console.groq.com](https://console.groq.com) — no credit card needed.
 
@@ -136,6 +140,90 @@ python -m ytfactory.cli list
 | **Phase 4: Visuals** | `S09`, `S11`–`S16`| Scene plan, Pixabay stock harvesting, license gate, sidechain music ducking & FFmpeg render |
 | **Phase 5: Packaging**| `S18` | Thumbnail synthesis, SEO description, tags & timestamped chapters |
 | **Phase 6: QC & Delivery**| `S19`–`S22` | 20 Automated QC assertions, AI editorial audit, S21 Human Gate & final sealed package |
+
+---
+
+## 🖼️ Free GPU Image Generation (Kaggle + FLUX.1-schnell)
+
+By default S13 uses Pixabay stock images. For **AI-generated, scene-specific visuals** at zero cost, YTFactory integrates a pull-based GPU bus that offloads rendering to a **free Kaggle T4×2 session** running FLUX.1-schnell (Apache 2.0).
+
+### How it works
+
+```
+Your laptop                   Hugging Face (message bus)      Kaggle GPU session
+──────────────                ──────────────────────────      ──────────────────
+rerun --from S13 ──upload──▶  inbox/<batch_id>.json
+                              inbox/<batch>.claim       ◀──── gpu_worker.py claims
+                              outbox/<job_id>.png       ◀──── renders FLUX scenes
+laptop reaps + sha256-verifies ─────────────────────────────▶ pipeline continues
+```
+
+> Kaggle sessions cannot accept inbound connections — the worker *polls* the bus (pull-based). The laptop verifies sha256 of every image before use. If the worker is unavailable, S13 silently falls back to library abstracts — **the pipeline never blocks.**
+
+### One-time setup
+
+1. **Create a Hugging Face account + write token** → [huggingface.co/settings/tokens](https://huggingface.co/settings/tokens)  
+   Set `HF_TOKEN` in your `.env`.
+
+2. **Accept the FLUX.1-schnell license** (one click):  
+   [huggingface.co/black-forest-labs/FLUX.1-schnell](https://huggingface.co/black-forest-labs/FLUX.1-schnell) → *Agree and access*
+
+3. **Create a Kaggle account** → [kaggle.com](https://www.kaggle.com)  
+   Download your API token to `%USERPROFILE%\.kaggle\kaggle.json`.
+
+4. **Edit the kernel owner** in [`kaggle/gpu_worker/kernel-metadata.json`](kaggle/gpu_worker/kernel-metadata.json):
+   ```json
+   { "id": "<your-kaggle-username>/flux-gpu-worker" }
+   ```
+
+5. **Set the bus repo** in your `.env`:
+   ```env
+   YT_GPU_BUS_REPO=your-hf-username/ytfactory-gpu-bus
+   ```
+   The private HF dataset repo is auto-created on first use.
+
+### Running the GPU worker
+
+```powershell
+# Push the kernel — this IS the run (starts a T4×2 session immediately)
+kaggle kernels push -p kaggle/gpu_worker --accelerator gpuT4x2
+
+# Check session status
+kaggle kernels status <your-kaggle-username>/flux-gpu-worker
+
+# Follow logs live
+kaggle kernels logs -f <your-kaggle-username>/flux-gpu-worker
+```
+
+### Trigger FLUX image generation
+
+```powershell
+# Re-run S13 with GPU mode enabled (45-min timeout for GGUF model download)
+python -m ytfactory.cli rerun <project-slug> --from S13 --live `
+    --set image_gen=gpu --set gpu_timeout_s=2700
+```
+
+Watch for `S13 gpu batch <id>: 7/7 verified` in the pipeline notes. GPU-generated images appear in `outputs/<slug>/assets/` (0.5–1.4 MB vs ~35 KB stock images) and are credited as `apache-2.0` in `CREDITS.md`.
+
+### Local dry run (no Kaggle needed)
+
+```powershell
+# Terminal 1 — start the local GPU bus simulator
+python -m ytfactory.workers.gpubus --watch
+
+# Terminal 2 — trigger S13
+python -m ytfactory.cli rerun <slug> --from S13 --live --set image_gen=gpu
+```
+
+### Quota & cost
+
+| Resource | Cost |
+|---|---|
+| Kaggle GPU (T4×2) | **Free** — ~30 h/week quota, worker self-limits to 55 min/session |
+| Hugging Face dataset bus | **Free** — private dataset, this traffic is well within limits |
+| FLUX.1-schnell model | **Apache 2.0** — commercially usable, no attribution required |
+
+> 📖 Full technical reference: [`docs/kaggle-flux.md`](docs/kaggle-flux.md)
 
 ---
 
