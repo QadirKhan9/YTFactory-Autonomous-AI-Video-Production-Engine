@@ -1,0 +1,33 @@
+# YTFactory provider registry — the single point of change for provider death.
+# Switching a provider = edit this file (D-005 / architecture.md §1.4).
+
+# Model ids probed live 2026-10-12 (store/llm_probe.py) — only verified ids below.
+# Dropped dead rungs: cerebras/qwen3-32b (no key), mistral/free (invalid litellm id),
+# local/qwen3-4b-gguf (no local server), gemini/flash + gemini/flash-lite (404),
+# groq/llama-3.3-70b + groq/gpt-oss-120b (404). Re-add only after a live probe passes.
+tiers:
+  cheap:
+    - groq/openai/gpt-oss-20b
+    - gemini/gemini-3.5-flash-lite
+    - gemini/gemini-3.5-flash
+  writer:
+    - gemini/gemini-3.5-flash
+    - groq/openai/gpt-oss-120b
+    - gemini/gemini-3.5-flash-lite
+  verifier:
+    - groq/openai/gpt-oss-120b
+    - gemini/gemini-3.5-flash
+
+decorrelation:
+  # A6 Fact Checker / A5 Critic must not run on the same model family as A4.
+  verifier_excludes_writer_family: true
+
+demotion:
+  consecutive_errors: 3
+  window_minutes: 10
+  demote_minutes: 60          # non-transient (auth/bad id/schema): hard ban
+  transient_demote_seconds: 60  # 429/5xx/connection: heal fast (free-tier retry-after is 13-51s)
+  max_recover_wait_s: 75         # bounded in-invoke wait when a whole tier is rate-limited
+
+budget:
+  max_llm_calls_per_project: 80

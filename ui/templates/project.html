@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %}{{ project.topic }} — YTFactory{% endblock %}
+{% block nav %}
+  <a href="/projects/{{ project.slug }}" class="active" id="nav-detail">Detail</a>
+  <a href="/projects/{{ project.slug }}/review" id="nav-review">Review</a>
+  <a href="/projects/{{ project.slug }}/qc" id="nav-qc">QC</a>
+  <a href="/projects/{{ project.slug }}/delivery" id="nav-delivery">Delivery</a>
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>{{ project.topic }}</h1>
+    <div class="page-title-sub">{{ project.slug }}</div>
+  </div>
+  <div class="actions">
+    <span class="badge st-{{ project.status }}" style="font-size:12px; padding:6px 14px">{{ project.status }}</span>
+    {% if project.status == 'AWAITING_HUMAN' %}
+    <a class="btn btn-ok" href="/projects/{{ project.slug }}/review" id="goto-review-btn">Review & Approve</a>
+    {% elif project.status in ['PAUSED', 'REJECTED'] %}
+    <form action="/projects/{{ project.slug }}/resume" method="post" style="display:inline">
+      <button class="btn btn-primary" type="submit" id="resume-btn">Resume Pipeline</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Step timeline -->
+<h2>Pipeline Steps</h2>
+<div class="step-grid">
+  {% for s in steps %}
+  {% set dot_cls = s.status %}
+  <div class="step-item" id="step-{{ s.step_name }}">
+    <div class="step-dot {{ dot_cls }}"></div>
+    <div style="flex:1; min-width:0">
+      <div class="step-name">{{ s.step_name }}</div>
+      <div class="step-status">
+        {% if s.gate %}<span class="badge warn" style="font-size:10px">{{ s.gate }}</span>{% else %}{{ s.status }}{% endif %}
+      </div>
+    </div>
+    {% if s.status == 'done' %}
+    <span style="color:var(--ok); font-size:13px">✓</span>
+    {% elif s.status == 'cached' %}
+    <span style="color:var(--muted); font-size:11px">⚡</span>
+    {% elif s.status == 'failed' %}
+    <span style="color:var(--bad); font-size:13px">✕</span>
+    {% elif s.status == 'blocked' %}
+    <span style="color:var(--warn); font-size:13px">⏸</span>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="muted">No steps recorded yet.</div>
+  {% endfor %}
+</div>
+
+{% if steps | selectattr('status', 'equalto', 'failed') | list %}
+<h2>Errors</h2>
+<div class="card bad-card">
+  {% for s in steps %}
+  {% if s.status == 'failed' and s.error %}
+  <div style="margin-bottom:10px">
+    <span class="badge fail" style="margin-bottom:6px">{{ s.step_name }}</span>
+    <pre style="margin-top:6px">{{ s.error }}</pre>
+  </div>
+  {% endif %}
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Event log -->
+<h2>Recent Events</h2>
+<div class="card" style="padding:16px 18px">
+  <div class="event-log">
+    {% for e in events %}
+    <div class="event-item">
+      <div class="event-dot {{ e.level or 'info' }}"></div>
+      <div class="event-time">{{ e.timestamp[:19] if e.timestamp else '' }}</div>
+      <div class="event-msg"><b>{{ e.event_type }}</b> — {{ e.message }}</div>
+    </div>
+    {% else %}
+    <div class="muted">No events recorded yet.</div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endblock %}

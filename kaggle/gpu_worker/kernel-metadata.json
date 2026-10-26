@@ -1,0 +1,13 @@
+{
+  "id": "zain234/flux-gpu-worker",
+  "title": "flux gpu worker",
+  "code_file": "gpu_worker.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_internet": "true",
+  "dataset_sources": ["zain234/ytfactory-gpu-bus-config"],
+  "competition_sources": [],
+  "kernel_sources": []
+}

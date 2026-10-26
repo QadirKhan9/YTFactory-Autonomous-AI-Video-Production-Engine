@@ -1,0 +1,13 @@
+{
+  "id": "zain234/kokoro-tts-job",
+  "title": "kokoro tts job",
+  "code_file": "tts_job.py",
+  "language": "python",
+  "kernel_type": "script",
+  "is_private": "true",
+  "enable_gpu": "false",
+  "enable_internet": "true",
+  "dataset_sources": ["zain234/kagglw"],
+  "competition_sources": [],
+  "kernel_sources": []
+}

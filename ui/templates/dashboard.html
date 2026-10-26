@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}YTFactory — Dashboard{% endblock %}
+{% block nav %}<a href="/" class="active">Dashboard</a>{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>Projects</h1>
+    <div class="page-title-sub">{{ projects | length }} project{{ 's' if projects | length != 1 else '' }} in store</div>
+  </div>
+</div>
+
+<!-- Stats row -->
+{% set delivered = projects | selectattr('status','equalto','DELIVERED') | list | length %}
+{% set awaiting  = projects | selectattr('status','equalto','AWAITING_HUMAN') | list | length %}
+{% set running   = projects | selectattr('status','equalto','RUNNING') | list | length %}
+{% set failed    = projects | selectattr('status','equalto','FAILED') | list | length %}
+<div class="stat-grid">
+  <div class="stat-tile">
+    <div class="val">{{ projects | length }}</div>
+    <div class="lbl">Total</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--ok)">{{ delivered }}</div>
+    <div class="lbl">Delivered</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--warn)">{{ awaiting }}</div>
+    <div class="lbl">Awaiting Review</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--accent)">{{ running }}</div>
+    <div class="lbl">Running</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--bad)">{{ failed }}</div>
+    <div class="lbl">Failed</div>
+  </div>
+</div>
+
+{% if not projects %}
+<div class="card" style="text-align:center; padding:48px 24px;">
+  <div style="font-size:48px; margin-bottom:12px;">🎬</div>
+  <h3 style="margin-bottom:6px;">No projects yet</h3>
+  <p>Click <b>＋ New Project</b> above to start your first video pipeline.</p>
+</div>
+{% else %}
+
+{% if awaiting > 0 %}
+<div class="alert alert-warn" style="display:flex; align-items:center; gap:10px;">
+  <span style="font-size:18px">⏳</span>
+  <span><b>{{ awaiting }} project{{ 's' if awaiting != 1 else '' }}</b> awaiting your human review — scroll down to find them.</span>
+</div>
+{% endif %}
+
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>Topic</th>
+      <th>Status</th>
+      <th>Last updated</th>
+      <th></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for p in projects %}
+    <tr>
+      <td>
+        <div style="font-weight:600; font-size:14px; margin-bottom:2px;">{{ p.topic }}</div>
+        <div style="font-family:'JetBrains Mono',monospace; font-size:11px; color:var(--muted)">{{ p.slug }}</div>
+      </td>
+      <td>
+        <span class="badge st-{{ p.status }}">
+          {% if p.status == 'AWAITING_HUMAN' %}⏳{% elif p.status == 'DELIVERED' %}✅{% elif p.status == 'FAILED' %}❌{% elif p.status == 'RUNNING' %}⚙{% endif %}
+          {{ p.status }}
+        </span>
+      </td>
+      <td class="muted small">{{ p.updated_at }}</td>
+      <td>
+        <div class="row" style="gap:6px; justify-content:flex-end">
+          {% if p.status == 'AWAITING_HUMAN' %}
+          <a class="btn btn-ok" href="/projects/{{ p.slug }}/review" id="review-{{ p.slug }}">Review</a>
+          {% elif p.status == 'DELIVERED' %}
+          <a class="btn btn-ghost" href="/projects/{{ p.slug }}/delivery" id="delivery-{{ p.slug }}">Delivery</a>
+          {% else %}
+          <a class="btn btn-ghost" href="/projects/{{ p.slug }}" id="detail-{{ p.slug }}">Details</a>
+          {% endif %}
+        </div>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+{% endblock %}

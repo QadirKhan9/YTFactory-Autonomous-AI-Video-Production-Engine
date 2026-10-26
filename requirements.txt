@@ -1,0 +1,44 @@
+# ==============================================================
+# YTFactory - Production Dependencies
+# Install with: pip install -r requirements.txt
+# System prerequisite: ffmpeg must be installed on PATH
+# ==============================================================
+
+# ----------------- Web UI & Dashboard -----------------
+fastapi>=0.100.0
+uvicorn>=0.23.0
+jinja2>=3.1.2
+python-multipart>=0.0.9
+
+# ----------------- LLM Cognitive & Routing Layer -----------------
+litellm>=1.40.0
+pydantic>=2.7.0
+pyyaml>=6.0.1
+python-dotenv>=1.0.0
+
+# ----------------- Research & Web Harvesting -----------------
+httpx>=0.27.0
+trafilatura>=2.0.0
+
+# ----------------- Audio DSP & Normalization -----------------
+numpy>=1.26.0
+scipy>=1.12.0
+soundfile>=0.12.1
+pyloudnorm>=0.1.1
+pydub>=0.25.1
+
+# ----------------- Speech Synthesis & Forced Alignment -----------------
+faster-whisper>=1.0.0
+kokoro-onnx>=0.3.0
+onnxruntime>=1.17.0
+
+# ----------------- Visual Processing & Media -----------------
+pillow>=10.2.0
+
+# ----------------- GPU Worker Bus & Remote Compute -----------------
+huggingface-hub>=0.23.0
+kaggle>=1.6.0
+
+# ----------------- System & Monitoring -----------------
+psutil>=5.9.0
+tqdm>=4.66.0

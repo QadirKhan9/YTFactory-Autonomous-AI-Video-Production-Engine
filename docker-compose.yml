@@ -1,0 +1,20 @@
+services:
+  ytfactory:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: ytfactory:latest
+    container_name: ytfactory
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    env_file:
+      - .env
+    environment:
+      - HOST=0.0.0.0
+      - PORT=8000
+    volumes:
+      # Persist rendered videos, database and visual library on host
+      - ./outputs:/app/outputs
+      - ./store:/app/store
+      - ./library:/app/library

@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}Delivery — {{ project.topic }}{% endblock %}
+{% block nav %}
+  <a href="/projects/{{ project.slug }}" id="nav-detail">Detail</a>
+  <a href="/projects/{{ project.slug }}/review" id="nav-review">Review</a>
+  <a href="/projects/{{ project.slug }}/qc" id="nav-qc">QC</a>
+  <a href="/projects/{{ project.slug }}/delivery" class="active" id="nav-delivery">Delivery</a>
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>Delivery Package</h1>
+    <div class="page-title-sub">{{ project.topic }}</div>
+  </div>
+  <div class="actions">
+    <span class="badge st-{{ project.status }}" style="font-size:12px; padding:6px 14px">{{ project.status }}</span>
+    {% if not files['final.mp4'].size %}
+    <span class="badge warn">final.mp4 missing</span>
+    {% endif %}
+  </div>
+</div>
+
+{% if files['final.mp4'].size %}
+<div class="alert alert-ok">
+  ✅ Package complete — all delivery files are ready.
+</div>
+{% else %}
+<div class="alert alert-warn">
+  ⚠ Package incomplete — finish the pipeline first (approve at S21 gate).
+</div>
+{% endif %}
+
+<!-- File cards -->
+<h2>Package Files</h2>
+<div class="grid-2" style="margin-bottom:24px">
+  {% for name, f in files.items() %}
+  <div class="card" style="padding:14px 18px; display:flex; align-items:center; gap:14px">
+    <div style="font-size:24px">
+      {% if name.endswith('.mp4') %}🎬
+      {% elif name.endswith('.png') %}🖼
+      {% elif name.endswith('.srt') or name.endswith('.vtt') %}💬
+      {% elif name.endswith('.json') %}📋
+      {% elif name.endswith('.md') %}📄
+      {% else %}📁{% endif %}
+    </div>
+    <div style="flex:1; min-width:0">
+      <div style="font-weight:600; font-size:13px">{{ name }}</div>
+      <div class="muted small">{{ (f.size / 1000000) | round(2) ~ ' MB' if f.size else 'not generated' }}</div>
+    </div>
+    {% if f.size %}
+    <a class="btn btn-ghost" href="{{ f.url }}" download style="padding:6px 12px; font-size:12px" id="dl-{{ name | replace('.','_') }}">↓</a>
+    {% else %}
+    <span class="badge warn" style="font-size:10px">missing</span>
+    {% endif %}
+  </div>
+  {% endfor %}
+</div>
+
+<!-- YouTube Metadata -->
+{% if meta %}
+<h2>YouTube Metadata</h2>
+
+<div class="card" style="margin-bottom:14px">
+  <div class="muted small" style="margin-bottom:8px">TITLE VARIANTS</div>
+  {% for t in meta.title_variants %}
+  <div style="font-size:14px; font-weight:600; margin-bottom:5px; display:flex; align-items:center; gap:8px">
+    <span class="badge muted-badge" style="font-size:10px">{{ loop.index }}</span>
+    {{ t }}
+  </div>
+  {% endfor %}
+</div>
+
+{% if meta.tags %}
+<div class="card" style="margin-bottom:14px">
+  <div class="muted small" style="margin-bottom:8px">TAGS</div>
+  <div style="display:flex; flex-wrap:wrap; gap:5px">
+    {% for tag in meta.tags %}
+    <span class="badge accent-badge">{{ tag }}</span>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<div class="card" style="margin-bottom:14px">
+  <div class="muted small" style="margin-bottom:8px">DESCRIPTION</div>
+  <textarea readonly rows="14" id="description-textarea">{{ meta.description }}</textarea>
+</div>
+
+{% if meta.disclosure %}
+<div class="card warn-card" style="margin-bottom:14px">
+  <div class="row" style="gap:8px">
+    <span style="font-size:18px">⚠</span>
+    <div>
+      <div style="font-weight:600; font-size:13px; margin-bottom:2px">AI Disclosure Required</div>
+      <div class="muted small">{{ meta.disclosure }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+{% endif %}
+
+<!-- Credits -->
+{% if credits_text %}
+<h2>Credits & Attribution</h2>
+<div class="card">
+  <pre>{{ credits_text }}</pre>
+</div>
+{% endif %}
+
+{% endblock %}

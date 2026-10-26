@@ -1,0 +1,26 @@
+"""Canonical ordered step names for the S00–S22 pipeline."""
+STEP_NAMES: list[str] = [
+    "S00_INTAKE",
+    "S01_RESEARCH_PLAN",
+    "S02_SOURCE_HARVEST",
+    "S03_SOURCE_SCORE",
+    "S04_EVIDENCE_INDEX",
+    "S05_OUTLINE",
+    "S06_DRAFT",
+    "S07_CRITIQUE",
+    "S08_FACT_CHECK",
+    "S09_SCENE_PLAN",
+    "S10_TTS",
+    "S17_CAPTIONS",  # audio-first: captions are arithmetic over the S10 master clock
+    "S11_VISUAL_SOURCE",
+    "S12_LICENSE_GATE",
+    "S13_IMAGE_GEN",
+    "S14_AUDIO_BED",
+    "S15_EDL_COMPILE",
+    "S16_RENDER",
+    "S18_PACKAGING",
+    "S19_AUTO_QC",
+    "S20_AI_QC",
+    "S21_HUMAN_GATE",
+    "S22_DELIVER",
+]

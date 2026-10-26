@@ -1,0 +1,32 @@
+# Version control
+.git
+.gitignore
+
+# Environment & secrets
+.env
+kaggle.json
+*.key
+*.token
+
+# Local storage & heavy outputs (mounted as volumes instead)
+outputs/
+store/
+models/
+
+# Python caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+env/
+venv/
+
+# Scratch & OS metadata
+scratch/
+.tempmediaStorage/
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

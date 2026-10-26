@@ -1,0 +1,235 @@
+{% extends "base.html" %}
+{% block title %}Review — {{ project.topic }}{% endblock %}
+{% block nav %}
+  <a href="/projects/{{ project.slug }}" id="nav-detail">Detail</a>
+  <a href="/projects/{{ project.slug }}/review" class="active" id="nav-review">Review</a>
+  <a href="/projects/{{ project.slug }}/qc" id="nav-qc">QC</a>
+  <a href="/projects/{{ project.slug }}/delivery" id="nav-delivery">Delivery</a>
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>Human Review</h1>
+    <div class="page-title-sub">{{ project.topic }}</div>
+  </div>
+  <div class="actions">
+    <span class="badge st-{{ project.status }}" style="font-size:12px; padding:6px 14px">{{ project.status }}</span>
+  </div>
+</div>
+
+<!-- Gate banner -->
+{% if awaiting %}
+<div class="gate-banner">
+  <h3>⏳ Awaiting Your Decision</h3>
+  <p>The pipeline has passed all 20 automated QC checks and AI editorial review.
+     Watch the video below, check the storyboard, then approve or reject.</p>
+  <div class="actions">
+    <form action="/projects/{{ project.slug }}/approve" method="post" style="display:inline">
+      <button class="btn btn-ok" type="submit" id="approve-btn">✅ Approve & Deliver</button>
+    </form>
+    <button class="btn btn-ghost" onclick="document.getElementById('changes-modal').classList.add('open')" id="changes-btn">
+      🔁 Request Changes
+    </button>
+    <button class="btn btn-danger" onclick="document.getElementById('reject-modal').classList.add('open')" id="reject-btn">
+      ❌ Reject Project
+    </button>
+  </div>
+</div>
+
+<!-- Changes modal -->
+<div class="modal-overlay" id="changes-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <h3>🔁 Request Changes</h3>
+    <p>The pipeline will be rewound to the selected step and re-run from there. All cached steps before that point are preserved.</p>
+    <form action="/projects/{{ project.slug }}/request_changes" method="post">
+      <div class="form-group">
+        <label>Rewind to step</label>
+        <select name="step" id="rewind-step" style="width:100%">
+          <option value="S18">S18 — Packaging (redo thumbnail/metadata)</option>
+          <option value="S15">S15 — EDL Compile (redo scene timing)</option>
+          <option value="S13">S13 — Image Gen (replace visuals)</option>
+          <option value="S11">S11 — Visual Source (re-fetch stock)</option>
+          <option value="S09">S09 — Scene Plan (redo storyboard)</option>
+          <option value="S06">S06 — Draft Script (rewrite script)</option>
+        </select>
+      </div>
+      <div class="form-row">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('changes-modal').classList.remove('open')">Cancel</button>
+        <button type="submit" class="btn btn-primary">Rewind & Re-run</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Reject modal -->
+<div class="modal-overlay" id="reject-modal" onclick="if(event.target===this)this.classList.remove('open')">
+  <div class="modal">
+    <h3>❌ Reject Project</h3>
+    <p>This will mark the project as <b>REJECTED</b>. You can still rerun it from the Detail page.</p>
+    <form action="/projects/{{ project.slug }}/reject" method="post">
+      <div class="form-group">
+        <label>Reason (optional)</label>
+        <input type="text" name="reason" id="reject-reason" placeholder="e.g. factual error in scene 3" style="width:100%">
+      </div>
+      <div class="form-row">
+        <button type="button" class="btn btn-ghost" onclick="document.getElementById('reject-modal').classList.remove('open')">Cancel</button>
+        <button type="submit" class="btn btn-danger">Reject</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+{% elif project.status in ['DELIVERED', 'APPROVED'] %}
+<div class="alert alert-ok">
+  ✅ Project is <b>{{ project.status }}</b> —
+  <a href="/projects/{{ project.slug }}/delivery">open delivery screen →</a>
+</div>
+{% else %}
+<div class="alert alert-warn">
+  ⚠ Gate not active (status: <b>{{ project.status }}</b>).
+  <a href="/projects/{{ project.slug }}">View steps →</a>
+</div>
+{% endif %}
+
+<!-- Video preview -->
+{% if has_video %}
+<h2>Preview</h2>
+<div class="card" style="padding:0; overflow:hidden">
+  <video controls preload="metadata" src="/outputs/{{ project.slug }}/final.mp4" id="video-preview"></video>
+</div>
+{% endif %}
+
+<!-- QC summary bar -->
+{% if qc and qc.assertions %}
+<h2>Auto-QC — {{ qc.passed }}/{{ qc.total }} passed</h2>
+<div class="card" style="padding:16px 20px">
+  <div class="row" style="margin-bottom:10px">
+    <span class="badge {{ 'pass' if qc.all_pass else 'fail' }}" style="font-size:12px; padding:5px 14px">
+      {{ '✅ ALL PASS' if qc.all_pass else '❌ ' ~ qc.failed ~ ' FAILED' }}
+    </span>
+    <span class="muted">{{ qc.passed }} passed · {{ qc.failed }} failed · {{ qc.skipped }} skipped</span>
+    <a href="/projects/{{ project.slug }}/qc" class="muted small" style="margin-left:auto">Full report →</a>
+  </div>
+  <div class="qc-bar">
+    <div class="qc-bar-inner" style="width:{{ ((qc.passed / qc.total) * 100) | round }}%"></div>
+  </div>
+  {% if not qc.all_pass %}
+  <div style="margin-top:10px">
+    {% for a in qc.assertions %}{% if a.status == 'fail' %}
+    <div style="display:flex; gap:8px; align-items:center; font-size:12px; margin-top:6px">
+      <span class="badge fail">{{ a.name }}</span>
+      <span class="muted">{{ a.detail }}</span>
+    </div>
+    {% endif %}{% endfor %}
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+<!-- AI QC -->
+{% if ai_qc %}
+<h2>AI Editorial Review</h2>
+<div class="card {% if ai_qc.blockers %}bad-card{% elif ai_qc.warnings %}warn-card{% else %}ok-card{% endif %}">
+  <div class="row" style="margin-bottom:12px">
+    <span class="badge {% if ai_qc.blockers %}fail{% else %}pass{% endif %}">{{ ai_qc.blockers | length }} blocker(s)</span>
+    <span class="badge {% if ai_qc.warnings %}warn{% else %}pass{% endif %}">{{ ai_qc.warnings | length }} warning(s)</span>
+    <span class="muted small">{{ ai_qc.method }} · {{ ai_qc.generated_at }}</span>
+  </div>
+  {% for f in ai_qc.blockers %}
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px">
+    <span class="badge fail">{{ f.dimension }}</span>
+    <span class="fg2" style="font-size:13px">{{ f.message }}</span>
+  </div>
+  {% endfor %}
+  {% for f in ai_qc.warnings %}
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:6px">
+    <span class="badge warn">{{ f.dimension }}</span>
+    <span class="muted" style="font-size:13px">{{ f.message }}</span>
+  </div>
+  {% endfor %}
+  {% for n in ai_qc.notes %}
+  <div class="muted small" style="margin-top:4px">ℹ {{ n }}</div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<!-- Storyboard -->
+<h2>Storyboard — {{ storyboard | length }} scenes</h2>
+<div class="scene-grid">
+  {% for s in storyboard %}
+  <div class="scene-card">
+    {% if s.preview %}
+    <img src="{{ s.preview }}" alt="Scene {{ s.ord }}">
+    {% else %}
+    <div class="scene-blank">🎬</div>
+    {% endif %}
+    <div class="scene-body">
+      <div class="scene-num">Scene {{ s.ord }}</div>
+      <div class="scene-time">
+        {% if s.start_ms is not none and s.end_ms is not none %}
+          {{ (s.start_ms / 1000) | round(1) }}s → {{ (s.end_ms / 1000) | round(1) }}s
+        {% else %}
+          TBD
+        {% endif %}
+      </div>
+      <div style="margin-top:5px">
+        {% if s.asset %}
+        <span class="badge {{ 'pass' if s.gate_status == 'approved' else 'warn' }}" style="font-size:10px">
+          {{ s.asset.license_id or 'unknown' }}
+        </span>
+        {% if s.asset.source_url %}
+        <a href="{{ s.asset.source_url }}" target="_blank" class="muted small" style="margin-left:4px">↗</a>
+        {% endif %}
+        {% else %}
+        <span class="badge warn" style="font-size:10px">no asset</span>
+        {% endif %}
+        {% if s.motion %}
+        <span class="muted small">· {{ s.motion }}</span>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+<!-- Fact linkages -->
+{% if claims %}
+<h2>Fact Checks — {{ claims | length }} claims</h2>
+<div class="card">
+  {% for c in claims %}
+  <div style="display:flex; gap:8px; align-items:flex-start; margin-bottom:8px; font-size:13px">
+    <span class="badge {{ 'pass' if c.verdict == 'supported' else 'fail' }}" style="flex-shrink:0">
+      {{ c.verdict }}
+    </span>
+    <span class="muted">{{ c.claim_text }}</span>
+  </div>
+  {% else %}<div class="muted">No claims recorded.</div>{% endfor %}
+</div>
+{% endif %}
+
+<!-- Metadata -->
+{% if metadata %}
+<h2>YouTube Metadata</h2>
+<div class="card">
+  <div style="margin-bottom:10px">
+    <div class="muted small" style="margin-bottom:4px">TITLE VARIANTS</div>
+    {% for t in metadata.title_variants %}
+    <div style="font-size:13px; margin-bottom:3px">{{ loop.index }}. {{ t }}</div>
+    {% endfor %}
+  </div>
+  {% if metadata.tags %}
+  <div class="sep"></div>
+  <div>
+    <div class="muted small" style="margin-bottom:6px">TAGS</div>
+    <div style="display:flex; flex-wrap:wrap; gap:5px">
+    {% for tag in metadata.tags %}
+    <span class="badge accent-badge" style="font-size:11px">{{ tag }}</span>
+    {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

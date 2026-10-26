@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block title %}QC — {{ project.topic }}{% endblock %}
+{% block nav %}
+  <a href="/projects/{{ project.slug }}" id="nav-detail">Detail</a>
+  <a href="/projects/{{ project.slug }}/review" id="nav-review">Review</a>
+  <a href="/projects/{{ project.slug }}/qc" class="active" id="nav-qc">QC</a>
+  <a href="/projects/{{ project.slug }}/delivery" id="nav-delivery">Delivery</a>
+{% endblock %}
+{% block content %}
+
+<div class="page-header">
+  <div>
+    <h1>Auto-QC Report</h1>
+    <div class="page-title-sub">{{ project.topic }}</div>
+  </div>
+  <div class="actions">
+    {% if qc %}
+    <span class="badge {{ 'pass' if qc.all_pass else 'fail' }}" style="font-size:13px; padding:7px 16px">
+      {{ '✅ ALL PASS' if qc.all_pass else '❌ ' ~ qc.failed ~ ' FAILED' }}
+    </span>
+    {% endif %}
+  </div>
+</div>
+
+{% if qc and qc.assertions %}
+
+<!-- Summary tiles -->
+<div class="stat-grid" style="margin-bottom:20px">
+  <div class="stat-tile">
+    <div class="val">{{ qc.total }}</div>
+    <div class="lbl">Total Checks</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--ok)">{{ qc.passed }}</div>
+    <div class="lbl">Passed</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--bad)">{{ qc.failed }}</div>
+    <div class="lbl">Failed</div>
+  </div>
+  <div class="stat-tile">
+    <div class="val" style="color:var(--muted)">{{ qc.skipped }}</div>
+    <div class="lbl">Skipped</div>
+  </div>
+</div>
+
+<!-- Progress bar -->
+<div style="margin-bottom:24px">
+  <div class="row" style="margin-bottom:6px">
+    <span class="muted small">Pass rate</span>
+    <span style="margin-left:auto; font-size:13px; font-weight:600">{{ ((qc.passed / qc.total) * 100) | round | int }}%</span>
+  </div>
+  <div class="qc-bar" style="height:8px">
+    <div class="qc-bar-inner" style="width:{{ ((qc.passed / qc.total) * 100) | round }}%; background: {% if qc.all_pass %}var(--ok){% else %}var(--bad){% endif %}"></div>
+  </div>
+</div>
+
+<!-- Assertions table -->
+<div class="table-wrap">
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Assertion</th>
+      <th>Status</th>
+      <th>Detail</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in qc.assertions %}
+    <tr>
+      <td class="muted small" style="width:36px">{{ a.id }}</td>
+      <td style="font-weight:600; font-size:13px; font-family:'JetBrains Mono',monospace">{{ a.name }}</td>
+      <td style="width:100px">
+        <span class="badge {{ a.status }}">
+          {% if a.status == 'pass' %}✓{% elif a.status == 'fail' %}✕{% else %}—{% endif %}
+          {{ a.status | upper }}
+        </span>
+      </td>
+      <td class="muted small">{{ a.detail }}</td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+</div>
+
+{% else %}
+<div class="card" style="text-align:center; padding:48px 24px">
+  <div style="font-size:40px; margin-bottom:12px">📋</div>
+  <h3>No QC report yet</h3>
+  <p>Run S19 to generate the auto-QC report.</p>
+  <code>python -m ytfactory.cli rerun {{ project.slug }} --from S19 --live</code>
+</div>
+{% endif %}
+
+{% endblock %}
