@@ -84,13 +84,16 @@ class KokoroBackend:
         self.speed = float(self.cfg.get("tts_speed", DEFAULT_SPEED))
 
     def available(self) -> bool:
-        if not (self.model_path.exists() and self.voices_path.exists()):
-            return False
         try:
             import kokoro_onnx  # noqa: F401
         except ImportError:
             return False
-        return True
+        if self.model_path.exists() and self.voices_path.exists():
+            return True
+        # If files are the standard release files, ensure_models() will auto-download them on demand
+        if self.model_path.name in RELEASE_FILES and self.voices_path.name in RELEASE_FILES:
+            return True
+        return False
 
     def synthesize(self, scenes: list[dict], out_dir: str) -> list[str]:
         from ytfactory.workers.audio import write_wav

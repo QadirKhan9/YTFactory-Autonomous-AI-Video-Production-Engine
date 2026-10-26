@@ -95,8 +95,8 @@ def run_s10(ctx: Ctx) -> dict:
     chain = selection_chain(ctx.config)
     if not chain:
         raise RuntimeError(
-            "no TTS backend available: install kokoro-onnx (models auto-fetch) "
-            "or piper-tts, or configure tts_hf_repo for the Kaggle batch"
+            "no TTS backend available: install edge-tts (`pip install edge-tts`), "
+            "kokoro-onnx, piper-tts, or configure tts_hf_repo for Kaggle batch"
         )
 
     used = None

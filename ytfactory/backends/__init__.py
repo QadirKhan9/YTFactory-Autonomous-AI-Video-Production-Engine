@@ -17,14 +17,16 @@ from ytfactory.backends.base import (  # noqa: F401  (re-exported)
 from ytfactory.backends.tts_kaggle_batch import KaggleBatchBackend
 from ytfactory.backends.tts_local_kokoro import KokoroBackend
 from ytfactory.backends.tts_local_piper import PiperBackend
+from ytfactory.backends.tts_edge_tts import EdgeTTSBackend
 
 # Selection order: primary first, local floors last (FR-A-05).
-BACKEND_ORDER = ("kaggle_batch", "local_kokoro", "local_piper")
+BACKEND_ORDER = ("kaggle_batch", "local_kokoro", "local_piper", "edge_tts")
 
 _REGISTRY: dict[str, type] = {
     "kaggle_batch": KaggleBatchBackend,
     "local_kokoro": KokoroBackend,
     "local_piper": PiperBackend,
+    "edge_tts": EdgeTTSBackend,
 }
 
 

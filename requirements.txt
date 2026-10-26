@@ -31,6 +31,7 @@ pydub>=0.25.1
 faster-whisper>=1.0.0
 kokoro-onnx>=0.3.0
 onnxruntime>=1.17.0
+edge-tts>=6.1.12
 
 # ----------------- Visual Processing & Media -----------------
 pillow>=10.2.0

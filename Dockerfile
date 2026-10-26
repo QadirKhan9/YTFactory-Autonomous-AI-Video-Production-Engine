@@ -38,9 +38,11 @@ COPY ui/ ./ui/
 COPY README.md .
 COPY .env.example .
 
-# Create persistent storage directories
-# library/ is seeded at runtime by vislib.py — do not COPY from repo (it is gitignored)
-RUN mkdir -p /app/outputs /app/store /app/library
+# Create persistent storage and models directories
+# Pre-download Kokoro TTS models (~310MB onnx + ~80MB voices) so synthesis works instantly
+RUN mkdir -p /app/outputs /app/store /app/library /app/models && \
+    curl -L -o /app/models/kokoro-v1.0.onnx https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1/kokoro-v1.0.onnx && \
+    curl -L -o /app/models/voices-v1.0.bin https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.1/voices-v1.0.bin
 
 # Mount points for outputs and SQLite database
 VOLUME ["/app/outputs", "/app/store", "/app/library"]
