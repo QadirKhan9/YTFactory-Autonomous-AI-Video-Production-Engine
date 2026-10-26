@@ -15,9 +15,10 @@
 
 ### 2. Installation
 
-1. **Clone or download this repository:**
+1. **Clone this repository:**
    ```bash
-   cd "New folder (2)"
+   git clone https://github.com/QadirKhan9/YTFactory-Autonomous-AI-Video-Production-Engine.git
+   cd YTFactory-Autonomous-AI-Video-Production-Engine
    ```
 
 2. **(Optional but recommended) Create a virtual environment:**
@@ -36,11 +37,16 @@
    ```powershell
    copy .env.example .env
    ```
-   Open `.env` and add your free Pixabay API key (and optionally Gemini / Groq keys):
+   Open `.env` and fill in your keys. **At least one LLM key is required** (Groq is free and recommended):
    ```env
-   PIXABAY_API_KEY=your_key_here
-   GEMINI_API_KEY=your_gemini_key_here
+   # ── Required: Stock media ──────────────────────────────
+   PIXABAY_API_KEY=your_pixabay_key_here
+
+   # ── LLM Providers (at least one required) ─────────────
+   GROQ_API_KEY=your_groq_key_here        # Free tier at console.groq.com
+   GEMINI_API_KEY=your_gemini_key_here    # Optional — console.cloud.google.com
    ```
+   > **Tip**: Get a free Groq API key at [console.groq.com](https://console.groq.com) — no credit card needed.
 
 ---
 
