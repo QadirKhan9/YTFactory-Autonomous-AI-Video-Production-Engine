@@ -3,6 +3,8 @@
 > **Broadcast-grade YouTube documentary generation from a single topic or question.**  
 > Powered by an autonomous 23-step state machine, multi-provider LLM routing, stock harvesting, neural TTS, automated QC verification, and a modern dark-glass Web UI.
 
+> 🆕 **First time here?** → Follow the [**Complete Beginner Setup Guide**](SETUP_GUIDE.md) — no coding experience needed, all steps included.
+
 ---
 
 ## ⚡ Quick Start (Ready in 3 Minutes)
