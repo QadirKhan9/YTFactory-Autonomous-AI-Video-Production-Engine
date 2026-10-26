@@ -32,15 +32,15 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r requirements.txt
 
 # Copy application source code
-COPY app.py .          
+COPY app.py .
 COPY ytfactory/ ./ytfactory/
 COPY ui/ ./ui/
-COPY library/ ./library/
 COPY README.md .
 COPY .env.example .
 
 # Create persistent storage directories
-RUN mkdir -p /app/outputs /app/store
+# library/ is seeded at runtime by vislib.py — do not COPY from repo (it is gitignored)
+RUN mkdir -p /app/outputs /app/store /app/library
 
 # Mount points for outputs and SQLite database
 VOLUME ["/app/outputs", "/app/store", "/app/library"]
