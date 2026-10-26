@@ -20,7 +20,7 @@ from typing import Callable
 
 import httpx
 
-DEFAULT_SOURCES = ("pixabay", "pexels", "nasa")
+DEFAULT_SOURCES = ("pixabay", "nasa")
 DEFAULT_TIMEOUT = 8.0
 USER_AGENT = "YTFactory/1.0 (batch video research tool)"
 
@@ -234,80 +234,6 @@ def search_pixabay(query: str, limit: int = 5) -> list[dict]:
     return out
 
 
-def search_pexels(query: str, limit: int = 5) -> list[dict]:
-    api_key = _get_api_key("PEXELS_API_KEY")
-    if not api_key:
-        return []
-    headers = {"Authorization": api_key, "User-Agent": USER_AGENT}
-    out: list[dict] = []
-    # 1. Search photos
-    try:
-        resp = httpx.get(
-            "https://api.pexels.com/v1/search",
-            params={"query": query, "per_page": limit, "orientation": "landscape"},
-            headers=headers,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if resp.status_code == 200:
-            for photo in (resp.json().get("photos") or []):
-                src = photo.get("src") or {}
-                url = src.get("large2x") or src.get("large") or src.get("original")
-                if not url:
-                    continue
-                out.append(
-                    {
-                        "source": "pexels",
-                        "asset_id": str(photo.get("id", "")),
-                        "title": photo.get("alt") or query,
-                        "url": url,
-                        "width": photo.get("width"),
-                        "height": photo.get("height"),
-                        "license_name": "Pexels License",
-                        "license_url": "https://www.pexels.com/license/",
-                        "credit": (photo.get("photographer") or "Pexels")[:120],
-                        "media_type": "image",
-                    }
-                )
-    except Exception:
-        pass
-
-    # 2. Search videos
-    try:
-        vresp = httpx.get(
-            "https://api.pexels.com/videos/search",
-            params={"query": query, "per_page": max(2, limit // 2), "orientation": "landscape"},
-            headers=headers,
-            timeout=DEFAULT_TIMEOUT,
-        )
-        if vresp.status_code == 200:
-            for video in (vresp.json().get("videos") or []):
-                vfiles = video.get("video_files") or []
-                candidates = [
-                    f for f in vfiles
-                    if f.get("link") and (f.get("file_type") == "video/mp4" or ".mp4" in f.get("link", ""))
-                ]
-                candidates.sort(key=lambda f: (f.get("width") or 0), reverse=True)
-                if not candidates:
-                    continue
-                chosen = candidates[0]
-                out.append(
-                    {
-                        "source": "pexels",
-                        "asset_id": str(video.get("id", "")),
-                        "title": (video.get("user") or {}).get("name") or query,
-                        "url": chosen["link"],
-                        "width": chosen.get("width"),
-                        "height": chosen.get("height"),
-                        "license_name": "Pexels License",
-                        "license_url": "https://www.pexels.com/license/",
-                        "credit": ((video.get("user") or {}).get("name") or "Pexels")[:120],
-                        "media_type": "video",
-                    }
-                )
-    except Exception:
-        pass
-    return out
-
 
 def search_nasa(query: str, limit: int = 5) -> list[dict]:
     try:
@@ -345,7 +271,6 @@ def search_nasa(query: str, limit: int = 5) -> list[dict]:
 
 SOURCE_REGISTRY: dict[str, Callable[[str, int], list[dict]]] = {
     "pixabay": search_pixabay,
-    "pexels": search_pexels,
     "nasa": search_nasa,
     "wikimedia": search_wikimedia,
     "openverse": search_openverse,

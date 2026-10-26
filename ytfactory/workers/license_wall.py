@@ -38,7 +38,6 @@ _RULES: list[tuple[str, str, bool, str]] = [
     (r"YOUTUBE AUDIO LIBRARY|YOUTUBE AUDIO LIB\b", "youtube-audio-library", True,
      "https://www.youtube.com/audiolibrary"),
     (r"PIXABAY", "pixabay-license", True, "https://pixabay.com/service/license-summary/"),
-    (r"PEXELS", "pexels-license", True, "https://www.pexels.com/license/"),
     (r"\bNASA\b", "nasa-media", True, "https://www.nasa.gov/nasa-brand-media-and-usage-guidelines/"),
     (r"\bPD\b|PD-OLD|PD-OLD-100", "PDM", True, "https://creativecommons.org/publicdomain/mark/1.0/"),
 ]
